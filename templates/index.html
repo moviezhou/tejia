@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Welcome to Flask!</h1>
+<br>
+<p>Click <a href="/logout">here</a> to logout.</p>
+<p><a href="/add">Add</a></p>
+<br>
+<h3>Markets</h3>
+<br>
+<div id="app">
+  <table class="table table-striped">
+  <thead class="thead-inverse">
+    <tr>
+      <th>#</th>
+      <th>Market Name</th>
+      <th>Address</th>
+      <th>Check</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for market in markets %}
+      <tr>
+        <th scope="row">{{ loop.index }}</th>
+        <td>{{ market.name }}</td>
+        <td>{{ market.address }}</td>
+        <td><input type="checkbox" value="{{ market.id }}" v-model="checked"></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+<div id="deleteApp">
+  <form action="">
+    <input type="hidden" value="" v-model="checked">
+    <button type="submit" class="btn btn-danger">delete</button>
+  </form>
+</div>
+<script>
+  var app = new Vue({
+    el: '#app',
+    data: {
+      checked: []
+    }
+  })
+
+  var deleteApp = new Vue({
+    el: '#deleteApp',
+    data: {
+      checked: ['ss']
+    }
+  })
+</script>
+{% endblock %}

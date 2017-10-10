@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Flask Intro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Add this to <head> -->
+	  <script src="{{ url_for('static', filename='js/vue.min.js') }}"></script>
+    <!-- <script src="https://unpkg.com/vue"></script> -->
+  </head>
+  <body>
+  	<div id="app">
+  {{ message }}
+</div>
+<script>
+  var app = new Vue({
+  el: '#app',
+  data: {
+    message: 'Hello Vue!'
+  }
+})
+</script>
+  </body>
+ </html>
