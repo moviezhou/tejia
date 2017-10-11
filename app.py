@@ -22,9 +22,11 @@ db = client.tejia
 
 @app.route('/')
 def home():
+	# { "$group": {"_id": "$name", "branchs": {"$push": "$address"}, "count": {"$sum": 1}}}
 	pipeline = [
-		{ "$group": {"_id": "$name", "branchs": {"$push": "$address"}, "count": {"$sum": 1}}}
-	]
+		{ "$group": {"_id": "$name", "branchs": {"$push": {"branch": "$branch", "address": "$address"}}, "count": {"$sum": 1}}}
+		# { "$group": {"_id": "$name", "branchs": {"$push": {"branch": "$address"}, "count": {"$sum": 1}}}}
+		]
 	gp = list(db.markets.aggregate(pipeline))
 	print(gp)
 	# result = []
@@ -37,7 +39,10 @@ def home():
 def add_product():
 	if request.method == 'POST':
 		# print(request.form['name'],request.form['address'])
-		post_id = db.markets.insert_one({'name':request.form['name'],'branch': request.form['branch'], 'address':request.form['address']}).inserted_id
+		coordinates = list(map((lambda x:float(x)),request.form['location'].split(',')))
+		
+		#location: {type: "Point", coordinates: [103.731937,36.104303]}, branch: "西太华科教城店",address:"安宁区宝石花路",name: "西太华超市"
+		post_id = db.markets.insert_one({'location':{'type': 'Point', 'coordinates': coordinates },'branch': request.form['branch'], 'address':request.form['address'], 'name': request.form['name']})
 		flash('new makret added')
 		error = None
 		return redirect(url_for('add_product'))
@@ -81,4 +86,4 @@ def products():
 	print(results)
 	return render_template('products.html', products=results)
 if __name__ == '__main__':
-	app.run(debug=True)
+	app.run(host= '0.0.0.0', debug=True)

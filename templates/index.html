@@ -46,9 +46,28 @@
       		</div>
       		<div id="{{ loop.index }}" class="collapse" role="tabpanel" aria-labelledby="headingOne" data-parent="#accordion">
       			<div class="card-body">
-      				{% for branch in market.branchs %}
-      					<p>{{ branch }}</p>
-      				{% endfor %}
+              <table class="table table-striped">
+                <thead class="thead-inverse">
+                  <tr>
+                    <th>#</th>
+                    <th>超市</th>
+                    <th>地址</th>
+                    <th>商品</th>
+                    <th>选择</th>
+                  </tr>
+                </thead>
+                <tbody>
+                    {% for branch in market.branchs %}
+                      <tr>
+                        <th scope="row">{{ loop.index }}</th>
+                        <td>{{ branch.branch }}</td>
+                        <td>{{ branch.address }}</td>
+                        <td><a href="/products">商品</a></td>
+                        <td><input type="checkbox" value="{{ market.id }}" v-model="checked"></td>
+                      </tr>
+                    {% endfor %}
+                </tbody>
+              </table>
       			</div>
       		</div>
       	</div>
