@@ -3,22 +3,14 @@
 <h1>商品详情</h1>
 <br>
 <p><a href="/">主页</a></p>
-<p><a href="/addproduct">添加</a></p>
+<p><a href="/addproduct/">添加</a></p>
 <div id="app">
-	 <form action = "/uploader" method = "POST" 
-         enctype = "multipart/form-data">
-         <input type = "file" name = "file" />
-         <input type = "submit"/>
-      </form>
 </div>
 <div>
-	<ul>
-		{% for product in products %}
-			<li>
-				<img src="static/images/{{ product.img }}" alt="">
-				<!-- <img src="{{ url_for('static', filename='images/{{ product.img }}') }}" alt="">		 -->
-			</li>
-		{% endfor %}
-	</ul>
+	{% for product in products %}
+		<p>
+			<img src="/static/images/{{ product.img }}" alt="">
+		</p>
+	{% endfor %}
 </div>
 {% endblock %}

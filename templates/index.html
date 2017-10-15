@@ -4,35 +4,12 @@
 <h1>今日特价</h1>
 <br>
 <p><a href="/logout">退出</a></p>
-<p><a href="/add">添加</a></p>
+<p><a href="/addmarket">添加</a></p>
+<p><a href="/products">产品</a></p>
 <br>
 <h3>Markets</h3>
 <br>
 <div id="app">
-<!--   <table class="table table-striped">
-  <thead class="thead-inverse">
-    <tr>
-      <th>#</th>
-      <th>超市</th>
-      <th>地址</th>
-      <th>商品</th>
-      <th>选择</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for market in markets %}
-      <tr>
-        <th scope="row">{{ loop.index }}</th>
-        <td>{{ market.name }}</td>
-        <td>{{ market.address }}</td>
-        <td><a href="/products">商品</a></td>
-        <td><input type="checkbox" value="{{ market.id }}" v-model="checked"></td>
-      </tr>
-    {% endfor %}
-  </tbody>
-	</table> -->
-
-
 <div>
 	<div id="accordion" role="tablist">
 		{% for market in markets %}
@@ -53,6 +30,7 @@
                     <th>超市</th>
                     <th>地址</th>
                     <th>商品</th>
+                    <th>管理</th>
                     <th>选择</th>
                   </tr>
                 </thead>
@@ -62,48 +40,50 @@
                         <th scope="row">{{ loop.index }}</th>
                         <td>{{ branch.branch }}</td>
                         <td>{{ branch.address }}</td>
-                        <td><a href="/products">商品</a></td>
-                        <td><input type="checkbox" value="{{ market.id }}" v-model="checked"></td>
+                        <td><a href="/addproduct/{{ branch.id }}">商品</a></td>
+                        <td><a href="/updatemarket/{{ branch.id }}">管理</a></td>
+                        <td><input type="checkbox" value="{{ branch.id }}" v-model="checked"></td>
                       </tr>
                     {% endfor %}
                 </tbody>
               </table>
+              <div>
+                <span v-text="checked"></span> 
+                  <!-- Button trigger modal -->
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#del{{ loop.index }}">
+                  删除
+                </button>
+                  <!-- Modal -->
+                <div class="modal fade" id="del{{ loop.index }}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title" id="exampleModalLabel">确认删除？</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                        </button>
+                      </div>
+                      <div class="modal-body">
+                        <span v-text="checked"></span>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                        <form action="/delete" method="post">
+                      <input type="hidden" name="marketId" value="" v-model="checked">
+                      <button type="submit" class="btn btn-danger">删除</button>
+                      <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+                      </form>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            </div>
       			</div>
       		</div>
       	</div>
 		{% endfor %}
 	</div>
 </div>
-<div>	
-	<!-- Button trigger modal -->
-	<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
-	  删除
-	</button>
-		<!-- Modal -->
-	<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-	  <div class="modal-dialog" role="document">
-	    <div class="modal-content">
-	      <div class="modal-header">
-	        <h5 class="modal-title" id="exampleModalLabel">确认删除？</h5>
-	        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-	          <span aria-hidden="true">&times;</span>
-	        </button>
-	      </div>
-	      <div class="modal-body">
-	        <span v-text="checked"></span>
-	      </div>
-	      <div class="modal-footer">
-	        <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
-	        <form action="/delete" method="post">
-				<input type="hidden" name="marketId" value="" v-model="checked">
-				<button type="submit" class="btn btn-danger">删除</button>
-				<!-- <button type="button" class="btn btn-primary">Save changes</button> -->
-				</form>
-	      </div>
-	    </div>
-	  </div>
-	</div>
-	</div>
 </div>
 <script>
   var app = new Vue({
