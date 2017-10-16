@@ -1,5 +1,6 @@
 from flask import Flask, render_template, flash, redirect, url_for
 from flask import request
+from flask import jsonify
 from bson.objectid import ObjectId
 from bson.son import SON
 from werkzeug.utils import secure_filename
@@ -77,7 +78,7 @@ def update_market(marketid):
 
 
 @app.route('/delete', methods=['POST'])
-def delete_product():
+def delete_market():
 	if request.method == 'POST':
 		_id = (request.form['marketId'])
 		result = db.markets.delete_one({'_id': ObjectId(_id)})
@@ -126,10 +127,10 @@ def products():
 	# 	{ "$lookup": 
 	# 		{
 	# 		"from": "markets",
- #          	"localField": "market_id",
- #          	"foreignField": "_id",
- #          	"as": "branch"
- #          }}
+ 	#          	"localField": "market_id",
+ 	#          	"foreignField": "_id",
+ 	#          	"as": "branch"
+ 	#          }}
 	# 	# { "$group": {"_id": "$name", "branchs": {"$push": {"branch": "$address"}, "count": {"$sum": 1}}}}
 	# 	]
 	# products = list(db.products.aggregate(pipeline))
@@ -139,5 +140,23 @@ def products():
 		results.append({'id': product['market_id'], 'img': product['img']})
 	return render_template('products.html', products=results)
 
+@app.route('/product/delete', methods=['POST'])
+def delete_product():
+	if request.method == 'POST':
+		# print('AAA',request.get_data().decode('utf-8'))
+		
+		# get post requrst json data
+		# With silent=True set, the get_json function will fail silently
+		data = request.get_json(silent=True)
+		productId = data['productId']
+		if productId:
+			product = db.products.find_one({'_id': ObjectId(productId)})
+			if product:
+				file = os.path.join(app.config['UPLOAD_FOLDER'], product['img'])
+				if os.path.isfile(file):
+					os.remove(file)
+					db.products.remove({'_id': ObjectId(productId)})
+					return jsonify({'data': 'success'})
+		return jsonify({'data':'failed'})
 if __name__ == '__main__':
 	app.run(host= '0.0.0.0', debug=True)
