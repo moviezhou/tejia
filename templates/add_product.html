@@ -7,29 +7,67 @@
 <p><a href="/addproduct/">添加</a></p>
 <div id="sandbox-container">
 	<div class="input-daterange input-group" id="datepicker">
-    <input type="text" class="input-sm form-control" name="start" />
-    <span class="input-group-addon">to</span>
-    <input type="text" class="input-sm form-control" name="end" />
+	    <input id="startdate" type="text" class="input-sm form-control" name="start" />
+	    <span class="input-group-addon">to</span>
+	    <input id="enddate" type="text" class="input-sm form-control" name="end" />
+	</div>
 </div>
-</div>
-<div id="app">
+<div id="">
 	 <form action = "/uploader" method = "POST" 
          enctype = "multipart/form-data">
          <input type="hidden" name="marketId" value="{{ marketid }}" required />
          <input type = "file" name = "file" required />
+         <input id="startDate" type="hidden" name="startdate" value="">
+         <input id="endDate" type="hidden" name="enddate" value="">
          <input type = "submit"/>
       </form>
 </div>
-<div>
+<div id="app">
+	<h3 v-text="selectedId"></h3>
 	{% for product in products %}
+	<div id="{{ product.id }}"  @click="select">
 		<p>
 			<img src="/static/images/{{ product.img }}" alt="">
 		</p>
+	</div>
 	{% endfor %}
 </div>
 
 <script>
 	$('#sandbox-container .input-daterange').datepicker({
+		language: 'zh-CN'
+	});
+
+	$('#startdate').datepicker()
+    .on('changeDate', function(e) {
+    	$('#startDate').val(e.date.toUTCString());
+        // console.log(e.date.toUTCString());// `e` here contains the extra attributes
+     });
+
+    $('#enddate').datepicker()
+    .on('changeDate', function(e) {
+        $('#endDate').val(e.date.toUTCString());;// `e` here contains the extra attributes
+     });
+
+    var app = new Vue({
+    	el: '#app',
+    	data: {
+    		selectedId: '',
+    		selected: false
+    	},
+    	methods: {
+    		select: function (event) {
+      		this.selectedId = event.currentTarget.id;
+      		console.log(event.currentTarget.id);
+    	}
+    }
 });
+
+
+	// function showDate(){
+	// 	window.alert($('#startdate').val());
+	// 	window.alert($('#startdate').data('datepicker').getDate());
+	// 	window.alert($('#enddate').data('datepicker').getUTCDate());
+	// }
 </script>
 {% endblock %}

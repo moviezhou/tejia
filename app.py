@@ -91,12 +91,18 @@ def delete_product():
 @app.route('/uploader', methods=['GET', 'POST'])
 def upload_file():
 	if request.method == 'POST':
+		# Convert js utc date format to python datetime object
+		start_date = datetime.strptime(request.form['startdate'], "%a, %d %b %Y %H:%M:%S %Z")
+		end_date = datetime.strptime(request.form['startdate'], "%a, %d %b %Y %H:%M:%S %Z")
+
 		f = request.files['file']
 		filename_ext = secure_filename(f.filename).split('.')[-1]
 		current_milli_time = lambda: int(round(time.time() * 1000))
 		img_name = str(current_milli_time())[4:] + '.' + filename_ext
 		f.save(os.path.join(app.config['UPLOAD_FOLDER'], img_name))
-		db.products.insert_one({'market_id': ObjectId(request.form['marketId']), 'img': img_name, "last_modified": datetime.utcnow()})
+
+		db.products.insert_one({'market_id': ObjectId(request.form['marketId']), 'img': img_name, 
+			'start_date': start_date, 'end_date': end_date, 'last_modified': datetime.utcnow()})
 		return redirect(url_for('add_products', marketid=request.form['marketId']))
 
 	# else:
@@ -109,7 +115,7 @@ def add_products(marketid):
 	products = db.products.find({'market_id': ObjectId(marketid)});
 	branch = market['name'] + market['branch']
 	for product in products:
-		results.append({'id': product['market_id'], 'img': product['img']})
+		results.append({'marketid': product['market_id'],'id': product['_id'], 'img': product['img']})
 	return render_template('add_product.html',marketid = marketid , branch= branch, products=results)
 
 
