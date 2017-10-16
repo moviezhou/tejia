@@ -3,7 +3,8 @@ from flask import request
 from bson.objectid import ObjectId
 from bson.son import SON
 from werkzeug.utils import secure_filename
-import os, time, datetime
+from datetime import datetime
+import os, time
 # from flask_pymongo import PyMongo
 from pymongo import MongoClient
 
@@ -95,7 +96,7 @@ def upload_file():
 		current_milli_time = lambda: int(round(time.time() * 1000))
 		img_name = str(current_milli_time())[4:] + '.' + filename_ext
 		f.save(os.path.join(app.config['UPLOAD_FOLDER'], img_name))
-		db.products.insert_one({'market_id': ObjectId(request.form['marketId']), 'img': img_name, "last_modified": datetime.utc.now()})
+		db.products.insert_one({'market_id': ObjectId(request.form['marketId']), 'img': img_name, "last_modified": datetime.utcnow()})
 		return redirect(url_for('add_products', marketid=request.form['marketId']))
 
 	# else:
