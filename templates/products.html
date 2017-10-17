@@ -1,16 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>商品详情</h1>
-<br>
-<p><a href="/">主页</a></p>
-<p><a href="/addproduct/">添加</a></p>
+<h1>所有商品</h1>
 <div id="app">
-</div>
-<div>
-	{% for product in products %}
-		<p>
-			<img src="/static/images/{{ product.img }}" alt="">
-		</p>
-	{% endfor %}
+	<div class="container">
+	    <div class="row imagetiles">
+	    	{% for product in products %}
+	    	<div class="col-lg-3 col-md-4 col-xs-6" id="{{ product.id }}"  @click="select">
+	            <img src="/static/images/{{ product.img }}" class="img-fluid img-thumbnail">
+	        </div>
+			{% endfor %}
+	    </div>
+	</div>
 </div>
 {% endblock %}
