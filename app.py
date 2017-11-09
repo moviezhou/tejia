@@ -1,8 +1,12 @@
 from flask import Flask, render_template, flash, redirect, url_for
 from flask import request
 from flask import jsonify
+from flask import Flask, request, make_response
+from flask_restful import Resource, Api
+import json
 from bson.objectid import ObjectId
 from bson.son import SON
+from bson import json_util
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import os, time
@@ -14,9 +18,13 @@ ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
 
 
 app = Flask(__name__)
+api = Api(app)
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config.update(RESTFUL_JSON=dict(ensure_ascii=False))
 
 app.secret_key = 'Ca$ablanca'
+
 
 # mongo = PyMongo(app)
 client = MongoClient("localhost", 27017)
@@ -158,5 +166,33 @@ def delete_product():
 					db.products.remove({'_id': ObjectId(productId)})
 					return jsonify({'data': 'success'})
 		return jsonify({'data':'failed'})
+
+
+
+# Restful API
+class HelloWorld(Resource):
+    def get(self):
+    	results = []
+    	pipeline = [
+    	{"$lookup":{"from": "markets", "localField": "market_id", "foreignField": "_id", "as": "market"}},
+    	{ 
+        "$project" : {
+        	"img": 1, 
+            "market.name" : 1, 
+            "market.branch" : 1,
+            "market.location.coordinates" : 1 
+        }}
+    	]
+    	products = list(db.products.aggregate(pipeline))
+    	print(products)
+    	for product in products:
+    		results.append({'img': product['img']})
+    	return [json.loads(json.dumps(item, indent=4, default=json_util.default))
+                for item in products]
+    	#return products 
+
+api.add_resource(HelloWorld, '/test')
+
+
 if __name__ == '__main__':
 	app.run(host= '0.0.0.0', debug=True)
