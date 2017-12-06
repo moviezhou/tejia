@@ -1,17 +1,16 @@
-from flask import Flask, render_template, flash, redirect, url_for
-from flask import request
-from flask import jsonify
-from flask import Flask, request, make_response
+from flask import Flask, render_template, request,make_response, jsonify, flash, redirect, url_for
 from flask_restful import Resource, Api
-import json
 from bson.objectid import ObjectId
 from bson.son import SON
 from bson import json_util
 from werkzeug.utils import secure_filename
 from datetime import datetime
-import os, time
-# from flask_pymongo import PyMongo
 from pymongo import MongoClient
+
+import os, time, errno
+import json
+import glob
+
 
 UPLOAD_FOLDER = './static/images/'
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
@@ -51,7 +50,7 @@ def add_market():
 		coordinates = list(map((lambda x:float(x)),request.form['location'].split(',')))
 		
 		#location: {type: "Point", coordinates: [103.731937,36.104303]}, branch: "西太华科教城店",address:"安宁区宝石花路",name: "西太华超市"
-		post_id = db.markets.insert_one({'location':{'type': 'Point', 'coordinates': coordinates },'branch': request.form['branch'], 
+		post_id = db.markets.insert_one({'location':{'type': 'Point', 'coordinates': coordinates },'branch': request.form['branch'], 'branchId': request.form['branchId'],
 			'contact': request.form['contact'], 'phone': request.form['phone'], 'address':request.form['address'], 'name': request.form['name']})
 		flash('new makret added')
 		error = None
@@ -67,15 +66,17 @@ def update_market(marketid):
 			market = db.markets.find_one({'_id': ObjectId(marketid)})
 			return render_template('update_market.html', market = market)
 		elif request.method == 'POST':
+			coordinates = list(map((lambda x:float(x)),request.form['location'].split(',')))
 			db.markets.update_one(
 				{'_id': ObjectId(marketid)},{
 				'$set': {
 				'name': request.form['name'],
 				'branch': request.form['branch'],
+				'branchId': request.form['branchId'],
 				'contcat': request.form['contact'],
 				'phone': request.form['phone'],
 				'address': request.form['address'],
-				'location': {'type': 'Point', 'coordinates': request.form['location']}
+				'location': {'type': 'Point', 'coordinates': coordinates }
 				}
 				})
 			flash('Market updated')
@@ -104,11 +105,21 @@ def upload_file():
 		start_date = datetime.strptime(request.form['startdate'], "%a, %d %b %Y %H:%M:%S %Z")
 		end_date = datetime.strptime(request.form['startdate'], "%a, %d %b %Y %H:%M:%S %Z")
 
+		branchId = request.form['branchId']
 		f = request.files['file']
 		filename_ext = secure_filename(f.filename).split('.')[-1]
 		current_milli_time = lambda: int(round(time.time() * 1000))
 		img_name = str(current_milli_time())[4:] + '.' + filename_ext
-		f.save(os.path.join(app.config['UPLOAD_FOLDER'], img_name))
+
+		filePath = os.path.join(app.config['UPLOAD_FOLDER'], branchId, time.strftime("%Y%m%d"))
+
+		if not os.path.exists(filePath):
+			try:
+			    os.makedirs(filePath)
+			except OSError as e:
+			    if e.errno != errno.EEXIST:
+			        raise
+		f.save(os.path.join(filePath, img_name))
 
 		db.products.insert_one({'market_id': ObjectId(request.form['marketId']), 'img': img_name, 
 			'start_date': start_date, 'end_date': end_date, 'last_modified': datetime.utcnow()})
@@ -121,11 +132,12 @@ def upload_file():
 def add_products(marketid):
 	results = []
 	market = db.markets.find_one({'_id': ObjectId(marketid)})
+	branchId = market['branchId']
 	products = db.products.find({'market_id': ObjectId(marketid)});
 	branch = market['name'] + market['branch']
 	for product in products:
 		results.append({'marketid': product['market_id'],'id': product['_id'], 'img': product['img']})
-	return render_template('add_product.html',marketid = marketid , branch= branch, products=results)
+	return render_template('add_product.html',marketid = marketid, branch = branch, branchId = branchId, products = results)
 
 
 @app.route('/products', methods=['POST', 'GET'])
@@ -169,14 +181,85 @@ def delete_product():
 
 
 
+# multi file upload
+@app.route("/upload", methods=["POST"])
+def upload():
+	"""Handle the upload of a file."""
+	form = request.form
+
+	# Is the upload using Ajax, or a direct POST by the form
+	is_ajax = False
+	if form.get("__ajax", None) == "true":
+		is_ajax = True
+
+	# Target folder for these uploads.
+
+	target = os.path.join(app.config['UPLOAD_FOLDER'], 'test') #time.strftime("%Y%m%d")
+	if not os.path.exists(target):
+		try:
+			os.makedirs(target)
+		except OSError as e:
+			if is_ajax:
+				return ajax_response(False, "Couldn't create upload directory: {}".format(target))
+			elif e.errno != errno.EEXIST:
+				raise
+			else:
+				return "Couldn't create upload directory: {}".format(target)
+
+	print("=== Form Data ===")
+	for key, value in list(form.items()):
+		print(key, "=>", value)
+	for upload in request.files.getlist("file"):
+		filename = upload.filename.rsplit("/")[0]
+		destination = os.path.join(target, filename)
+		print("Accept incoming file:", filename)
+		print("Save it to:", destination)
+		upload.save(destination)
+
+	if is_ajax:
+		return ajax_response(True, 'test')
+	else:
+		return redirect(url_for("upload_complete", uuid='test'))
+
+
+@app.route("/files/test")
+def upload_complete():
+    """The location we send them to at the end of the upload."""
+
+    # Get their files.
+    root = os.path.join(app.config['UPLOAD_FOLDER'], 'test')
+    if not os.path.isdir(root):
+        return "Error: UUID not found!"
+
+    files = []
+    for file in glob.glob("{}/*.*".format(root)):
+        fname = file.split(os.sep)[-1]
+        files.append(fname)
+
+    return render_template("files.html",
+        uuid='test',
+        files=files,
+    )
+
+
+def ajax_response(status, msg):
+    status_code = "ok" if status else "error"
+    return json.dumps(dict(
+        status=status_code,
+        msg=msg,
+    ))
+
+
+
 # Restful API
-class HelloWorld(Resource):
+class ProductsAPI(Resource):
     def get(self):
     	results = []
     	pipeline = [
     	{"$lookup":{"from": "markets", "localField": "market_id", "foreignField": "_id", "as": "market"}},
     	{ 
         "$project" : {
+        	"_id": 0,
         	"img": 1, 
             "market.name" : 1, 
             "market.branch" : 1,
@@ -191,7 +274,7 @@ class HelloWorld(Resource):
                 for item in products]
     	#return products 
 
-api.add_resource(HelloWorld, '/test')
+api.add_resource(ProductsAPI, '/test')
 
 
 if __name__ == '__main__':
